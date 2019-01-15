@@ -1,0 +1,4 @@
+Woocommerce keys
+
+Consumer key: ck_d1194759e77574e7184243001ceb3772c88a9c70
+Consumer secret: cs_0163a8a49cd4124e078c373993c4117c7da5d64a
