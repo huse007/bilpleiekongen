@@ -3,32 +3,31 @@ import { Router, Route, Switch } from 'react-router-dom'; //Link
 import './components/fonter.css';
 import './App.css';
 import  axios from 'axios';
-//import Auth from './auth/Auth';
 import Navbar from './components/Navbar.js';
 import Products from './components/Products.js';
 import Minside from './components/Minside.js';
 import Login from './components/Login.js';
 import history from './history';
 import Callback from './callback/Callback';
-/* Todo: clean up urls */
-const url1 = 'http://localhost/bilpleiekongen/wp-json/';
-const url = 'http://localhost/bilpleiekongen/wp-json/wp/v2/pages/';
-const uri = 'http://localhost/bilpleiekongen/wp-json/wp/v2/settings';
-/* Products (/?_embed)*/
-const prod = 'http://localhost/bilpleiekongen/wp-json/wp/v2/product/?_embed';
+
+/* Url's and endpoint's */
+const URL = 'http://localhost/bilpleiekongen/wp-json';
+const endpoint_pages = '/wp/v2/pages';
+/* Products use /?_embed to include pictures */
+const endpoint_products = '/wp/v2/product/?_embed';
+const endpoint_main = '/';
 
 /* Root component
- * Should have cleaned up variable names 
+ * Should have cleaned up variable names
  */
 class App extends Component {
     constructor(props) {
-	    super(props);
+			super(props);
 
 	    this.state = {
-	      name: null,
+	      title: null,
 	      description: null,
-	      data: null,
-	      data2: null,
+	      pages: null,
 	      products: null,
 	      orders_id:[],
 	    };
@@ -55,29 +54,33 @@ class App extends Component {
     logout() {
 	      this.props.auth.logout();
     }
+		/* Fetching data from WP REST API */
     componentDidMount() {
 	      const {renewSession } = this.props.auth;
 
 	      if (localStorage.getItem('isLoggedIn')=== 'true') {
 	          renewSession();
 	      }
-	      fetch(url)
+				/* get links for Navbar */
+	      fetch(URL+endpoint_pages)
 	         .then(response =>response.json())
-	         .then(data => this.setState({data}));
+	         .then(data => this.setState({pages:data}));
 
-	      axios.options(uri)
-	         .then(function(response) {})
-           .catch(function(error) {})
-           .then(function() {
-	      });
 	      var self = this;
-	      axios.get(url1)
-	         .then(function(response) {
-		          self.setState({name:response.data.name,description:response.data.description});})
-              .catch(function(error) {console.log(error);})
-              .then(function() {
+				/* get name and description of App */
+	      axios.get(URL+endpoint_main)
+	        .then(function(response) {
+		        self.setState({
+							title:response.data.name,
+							description:response.data.description});
+						})
+      		.catch(function(error) {
+						console.log(error);})
+          .then(function() {
 	      });
-	      axios.get(prod)
+
+				/* get list of products */
+	      axios.get(URL+endpoint_products)
 	         .then(function(response) {
 		           self.setState({products:response.data});})
                .catch(function(error) {})
@@ -93,16 +96,15 @@ class App extends Component {
 	     return (
 		       <Router history={history} component={App}>
              <div className="App">
-               <Navbar name={this.state.name} description={this.state.description} data={this.state.data} status={isAuthenticated()} login={this.login.bind(this)} logout={this.logout.bind(this)}/>
+               <Navbar name={this.state.title} description={this.state.description} data={this.state.pages} status={isAuthenticated()} login={this.login.bind(this)} logout={this.logout.bind(this)}/>
                <Switch>
-                 <Route path = '/Produkter' exact render={(props)=><Products data={this.state.products} orders_id={this.addToCart.bind(this)}/>}/>
-                 <Route path="/Min side" render={() => !isAuthenticated() ?  <Login login={this.login.bind(this)}/> : <Minside orderslist={this.state.orders_id}/>}/>
-                 <Route path="/callback" render={(props) => {this.handleAuthentication(props); return <Callback {...props} /> }}/>
+                 <Route path = '/Produkter' exact render = {(props) => <Products data={this.state.products} orders_id={this.addToCart.bind(this)}/>}/>
+                 <Route path = '/Min side' render = {() => !isAuthenticated() ?  <Login login={this.login.bind(this)}/> : <Minside orderslist={this.state.orders_id}/>}/>
+								 <Route path = '/callback' render = {(props) => {this.handleAuthentication(props); return <Callback {...props} /> }}/>
                </Switch>
              </div>
            </Router>
-
-	);
+			);
   }
 }
 
